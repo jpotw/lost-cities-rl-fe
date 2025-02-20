@@ -1,4 +1,4 @@
-import { Card, CardColor, GameState } from '@/types/game';
+import { Card, CardColor, GameState, Player } from '@/types/game';
 import { v4 as uuidv4 } from 'uuid';
 
 export const COLORS: CardColor[] = ['red', 'blue', 'green', 'yellow', 'white', 'purple'];
@@ -23,7 +23,7 @@ export const createDeck = (): Card[] => {
         // Add handshake cards (3 per color)
         for (let i = 0; i < 3; i++) {
             deck.push({
-                id: deck.length + 1,
+                id: String(deck.length + 1),
                 color,
                 value: 'HS'
             });
@@ -32,7 +32,7 @@ export const createDeck = (): Card[] => {
         // Add number cards (2-10)
         NUMBER_VALUES.forEach(value => {
             deck.push({
-                id: deck.length + 1,
+                id: String(deck.length + 1),
                 color,
                 value
             });
@@ -127,4 +127,36 @@ export const calculateExpeditionScore = (expedition: Card[]): number => {
     if (numCards >= 8) score += 20; // Bonus for 8+ cards
     
     return score;
+};
+
+export const calculateScore = (player: Player): number => {
+  let totalScore = 0;
+
+  // Calculate score for each expedition
+  Object.values(player.expeditions).forEach((expedition: Card[]) => {
+    if (expedition.length === 0) return;
+
+    let expeditionScore = 0;
+    let multiplier = 1;
+
+    // Calculate raw points and multipliers
+    expedition.forEach((card: Card) => {
+      if (card.value === 0) {
+        multiplier += 1;
+      } else {
+        expeditionScore += Number(card.value);
+      }
+    });
+
+    // Apply expedition cost (-20)
+    expeditionScore -= 20;
+
+    // Apply multiplier
+    expeditionScore *= multiplier;
+
+    // Add to total score
+    totalScore += expeditionScore;
+  });
+
+  return totalScore;
 }; 

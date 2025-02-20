@@ -1,43 +1,48 @@
-import { GameState } from '@/types/game';
+import { GameState, Card, CardColor } from '@/types/game';
 
+// Transform the game state for the backend API
 function transformGameStateForBackend(state: GameState) {
     return {
-        ...state,
+        currentPlayerIndex: state.currentPlayerIndex,
+        gamePhase: state.gamePhase,
         players: state.players.map(player => ({
-            ...player,
-            hand: player.hand.filter(card => card).map(card => ({
+            id: player.id,
+            name: player.name,
+            type: player.type,
+            hand: player.hand.map(card => ({
                 id: card.id,
-                suit: card.color.toUpperCase(),
-                value: card.value,
+                suit: card.color,
+                value: card.value === 'HS' ? 0 : card.value,
                 isHidden: card.isHidden || false
             })),
             expeditions: Object.fromEntries(
                 Object.entries(player.expeditions).map(([color, cards]) => [
-                    color.toUpperCase(),
-                    cards.filter(card => card).map(card => ({
+                    color,
+                    cards.map(card => ({
                         id: card.id,
-                        suit: card.color.toUpperCase(),
-                        value: card.value,
+                        suit: card.color,
+                        value: card.value === 'HS' ? 0 : card.value,
                         isHidden: card.isHidden || false
                     }))
                 ])
-            )
+            ),
+            score: player.score
         })),
         discardPiles: Object.fromEntries(
             Object.entries(state.discardPiles).map(([color, cards]) => [
-                color.toUpperCase(),
-                cards.filter(card => card).map(card => ({
+                color,
+                cards.map(card => ({
                     id: card.id,
-                    suit: card.color.toUpperCase(),
-                    value: card.value,
+                    suit: card.color,
+                    value: card.value === 'HS' ? 0 : card.value,
                     isHidden: card.isHidden || false
                 }))
             ])
         ),
-        deck: state.deck.filter(card => card).map(card => ({
+        deck: state.deck.map(card => ({
             id: card.id,
-            suit: card.color.toUpperCase(),
-            value: card.value,
+            suit: card.color,
+            value: card.value === 'HS' ? 0 : card.value,
             isHidden: card.isHidden || false
         }))
     };

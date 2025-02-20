@@ -1,5 +1,5 @@
 import { GameState, Card, CardColor } from '@/types/game';
-import { calculateExpeditionScore } from '@/utils/gameUtils';
+import { calculateExpeditionScore, createInitialGameState } from '@/utils/gameUtils';
 
 export type GameAction = 
     | { type: 'SELECT_CARD'; payload: Card }
@@ -9,7 +9,8 @@ export type GameAction =
     | { type: 'DRAW_FROM_DISCARD'; payload: CardColor }
     | { type: 'START_AI_TURN' }
     | { type: 'END_AI_TURN' }
-    | { type: 'SET_LAST_DISCARDED'; payload: { color: CardColor; cardId: number } };
+    | { type: 'SET_LAST_DISCARDED'; payload: { color: CardColor; cardId: string } }
+    | { type: 'RESET_GAME' };
 
 const canPlayCard = (card: Card, expedition: Card[]): boolean => {
     /*
@@ -182,6 +183,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                 lastDiscarded: action.payload
             };
         }
+        
+        case 'RESET_GAME':
+            return createInitialGameState('Player');
         
         default:
             return state;

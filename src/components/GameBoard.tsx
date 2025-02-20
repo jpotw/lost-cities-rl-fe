@@ -8,6 +8,7 @@ import { Expedition } from './Expedition';
 import { DiscardPile } from './DiscardPile';
 import { cn } from '@/utils/cn';
 import { getAIMove } from '@/api/utils';
+import { GameResult } from './GameResult';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -92,7 +93,7 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
                     type: 'SET_LAST_DISCARDED',
                     payload: {
                     color: selectedCard.color,
-                    cardId: selectedCard.id
+                    cardId: String(selectedCard.id)
                     }
                 });
                 playSound('discard');
@@ -145,7 +146,7 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
       onGameAction({ type: 'DISCARD_CARD', payload: card });
       onGameAction({ 
         type: 'SET_LAST_DISCARDED', 
-        payload: { color: card.color, cardId: card.id }
+        payload: { color: card.color, cardId: String(card.id) }
       });
       playSound('discard');
     }
@@ -163,6 +164,10 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
       onGameAction({ type: 'DRAW_FROM_DECK' });
       playSound('drawCard');
     }
+  };
+
+  const handlePlayAgain = () => {
+    onGameAction({ type: 'RESET_GAME' });
   };
 
   // Only render client-side content after hydration
@@ -296,6 +301,14 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
           </motion.div>
         </div>
       </div>
+
+      {/* Show game result screen when game is over */}
+      {gameState.gamePhase === 'GAME_OVER' && (
+        <GameResult 
+          players={gameState.players}
+          onPlayAgain={handlePlayAgain}
+        />
+      )}
     </div>
   );
 }; 
