@@ -12,6 +12,9 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        ubuntu: ['var(--font-ubuntu)', 'Ubuntu', 'sans-serif'],
+      },
     },
   },
   plugins: [],
