@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import { Card as CardType, CardColor, GameState } from '@/types/game';
 import { COLORS } from '@/utils/gameUtils';
 import { GameAction } from '@/reducers/gameReducer';
-import { makeAIMove } from '@/utils/aiUtils';
 import { PlayerHand } from './PlayerHand';
 import { Expedition } from './Expedition';
 import { DiscardPile } from './DiscardPile';
 import { cn } from '@/utils/cn';
+import { getAIMove } from '@/api/utils';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -55,94 +55,73 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     const handleAITurn = async () => {
       if (gameState.currentPlayerIndex === 1 && !gameState.isAIThinking && gameState.gamePhase !== 'GAME_OVER') {
         onGameAction({ type: 'START_AI_TURN' });
-
         try {
-          const aiState = await makeAIMove(gameState, 1);
-
-          if (aiState.gamePhase === 'DRAW') {
-            // Apply the AI's play move by comparing the states
-            const playedCard = gameState.players[1].hand.find(c => 
-              !aiState.players[1].hand.some(ac => ac.id === c.id)
-            );
-
-            if (!playedCard) return;
-
-            // Check if card was played to expedition or discarded
-            const wasPlayedToExpedition = Object.values(aiState.players[1].expeditions).some(exp =>
-              exp.some(c => c.id === playedCard.id)
-            );
-
-            if (wasPlayedToExpedition) {
-              onGameAction({
-                type: 'PLAY_CARD',
-                payload: { 
-                  card: { ...playedCard, isHidden: false },
-                  color: playedCard.color 
-                }
-              });
-              playSound('playCard');
-            } else {
-              onGameAction({ 
-                type: 'DISCARD_CARD', 
-                payload: { ...playedCard, isHidden: false }
-              });
-              onGameAction({ 
-                type: 'SET_LAST_DISCARDED', 
-                payload: { 
-                  color: playedCard.color, 
-                  cardId: playedCard.id 
-                }
-              });
-              playSound('discard');
+          const aiAction = await getAIMove(gameState); // Get the AI move from the API
+            // Convert the action received from the API to your game action format
+            const cardIndex = aiAction[0];
+            const playOrDiscard = aiAction[1];  // 0 for play, 1 for discard
+            const drawSource = aiAction[2];   // 0 for deck, 1-5 for discard piles
+            const aiPlayer = gameState.players.find(p => p.type === 'AI');
+            if (!aiPlayer) {
+                console.error("AI player not found");
+                return;
             }
-
+            if (cardIndex >= aiPlayer.hand.length) {
+                console.error("Invalid card index from AI");
+                return;
+            }
+            const selectedCard = aiPlayer.hand[cardIndex];
+            if (playOrDiscard === 0) {
+                //play card
+                onGameAction({
+                    type: 'PLAY_CARD',
+                    payload: {
+                    card: { ...selectedCard, isHidden: false },
+                    color: selectedCard.color
+                    }
+                });
+                playSound('playCard');
+            }
+            else{
+                //discard card
+                onGameAction({
+                    type: 'DISCARD_CARD',
+                    payload: { ...selectedCard, isHidden: false }
+                });
+                onGameAction({
+                    type: 'SET_LAST_DISCARDED',
+                    payload: {
+                    color: selectedCard.color,
+                    cardId: selectedCard.id
+                    }
+                });
+                playSound('discard');
+            }
             await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Make draw choice on client side only
-            if (Math.random() > 0.5 && Object.values(gameState.discardPiles).some(pile => pile.length > 0)) {
-              const availableColors = Object.entries(gameState.discardPiles)
-                .filter(([color, pile]) => {
-                  if (pile.length === 0) return false;
-                  const topCard = pile[pile.length - 1];
-                  if (typeof topCard.value === 'number' && 
-                    topCard.value < 4 && 
-                    aiPlayer.expeditions[color as CardColor].length === 0) {
-                    return false;
-                  }
-                  return !(gameState.lastDiscarded && 
-                    gameState.lastDiscarded.color === color && 
-                    gameState.lastDiscarded.cardId === topCard.id);
-                })
-                .map(([color]) => color as CardColor);
-
-              if (availableColors.length > 0) {
-                const priorityColors = availableColors.filter(color => 
-                  aiPlayer.expeditions[color].length > 0
-                );
-                const randomColor = priorityColors.length > 0
-                  ? priorityColors[Math.floor(Math.random() * priorityColors.length)]
-                  : availableColors[Math.floor(Math.random() * availableColors.length)];
-                onGameAction({ type: 'DRAW_FROM_DISCARD', payload: randomColor });
-              } else {
+            //draw
+            if (drawSource === 0) {
+                //draw from deck
                 onGameAction({ type: 'DRAW_FROM_DECK' });
-              }
-            } else {
-              onGameAction({ type: 'DRAW_FROM_DECK' });
+
+            }
+            else{
+                //draw from discard
+                const color = COLORS[drawSource - 1]; // Convert index to color
+                onGameAction({ type: 'DRAW_FROM_DISCARD', payload: color });
             }
             playSound('drawCard');
-
             await new Promise(resolve => setTimeout(resolve, 500));
             onGameAction({ type: 'END_AI_TURN' });
-          }
+
         } catch (error) {
           console.error('Error during AI turn:', error);
           onGameAction({ type: 'END_AI_TURN' });
         }
       }
     };
-
-    handleAITurn();
-  }, [isClient, gameState, onGameAction, aiPlayer.expeditions, playSound]);
+  
+      handleAITurn();
+    }, [isClient, gameState, onGameAction, playSound]);
 
   const handleCardSelect = (card: CardType) => {
     console.log('Card selected:', card);

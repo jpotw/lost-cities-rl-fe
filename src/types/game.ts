@@ -5,7 +5,8 @@ export type Card = {
     id: number;
     color: CardColor;
     value: CardValue;
-    isHidden?: boolean;
+    isHidden?: boolean; // Frontend-specific
+    isSelected?: boolean; // Frontend-specific
 };
 
 export type PlayerType = 'HUMAN' | 'AI';
@@ -33,4 +34,4 @@ export type GameState = {
         cardId: number;
     };
     winner?: string | null;
-}; 
+};
