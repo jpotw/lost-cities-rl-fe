@@ -47,7 +47,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
             const currentPlayer = state.players[state.currentPlayerIndex];
             const { card, color } = action.payload;
             
-            if (!canPlayCard(card, currentPlayer.expeditions[color])) {
+            if (!card || !canPlayCard(card, currentPlayer.expeditions[color])) {
                 return state;
             }
             
@@ -57,7 +57,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                     ...state.players.slice(0, state.currentPlayerIndex),
                     {
                         ...currentPlayer,
-                        hand: currentPlayer.hand.filter(c => c.id !== card.id),
+                        hand: currentPlayer.hand.filter(c => c?.id !== undefined && c.id !== card.id),
                         expeditions: {
                             ...currentPlayer.expeditions,
                             [color]: [...currentPlayer.expeditions[color], card]
@@ -72,6 +72,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         
         case 'DISCARD_CARD': {
             const currentPlayer = state.players[state.currentPlayerIndex];
+            const cardToDiscard = action.payload;
+
+            if (!cardToDiscard || !cardToDiscard.id) {
+                return state;
+            }
             
             return {
                 ...state,
@@ -79,13 +84,13 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                     ...state.players.slice(0, state.currentPlayerIndex),
                     {
                         ...currentPlayer,
-                        hand: currentPlayer.hand.filter(c => c.id !== action.payload.id)
+                        hand: currentPlayer.hand.filter(c => c?.id !== undefined && c.id !== cardToDiscard.id)
                     },
                     ...state.players.slice(state.currentPlayerIndex + 1)
                 ],
                 discardPiles: {
                     ...state.discardPiles,
-                    [action.payload.color]: [...state.discardPiles[action.payload.color], action.payload]
+                    [cardToDiscard.color]: [...state.discardPiles[cardToDiscard.color], cardToDiscard]
                 },
                 selectedCard: null,
                 gamePhase: 'DRAW'
