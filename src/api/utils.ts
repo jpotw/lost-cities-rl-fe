@@ -1,4 +1,6 @@
 import { GameState, Card, CardColor, PlayerType, GamePhase } from '@/types/game';
+import {SECRET_KEY} from '@/env.local';
+
 
 interface BackendCard {
     id: number;
@@ -127,6 +129,7 @@ export async function startNewGame(): Promise<GameState> {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
             },
             redirect: 'follow', // Follow any redirects
         });
@@ -178,16 +181,16 @@ export async function getAIMove(gameState: GameState, maxRetries: number = 5, re
     while (attempts < maxRetries) {
         try {
             const transformedState = transformGameStateForBackend(gameState);
-            console.log('Sending state to backend:', JSON.stringify(transformedState, null, 2));
             
             const response = await fetch(`/api/get_ai_move`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
-                redirect: 'follow', // Follow any redirects
                 body: JSON.stringify(transformedState),
+                redirect: 'follow',
             });
 
             // Log response details for debugging
