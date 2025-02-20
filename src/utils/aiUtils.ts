@@ -412,117 +412,43 @@ const chooseDrawSource = (state: GameState, playerIndex: number): { type: 'deck'
     return shouldDrawDeck ? { type: 'deck' } : { type: 'discard', color: bestDiscard!.color };
 };
 
-const chooseCardPlay = (state: GameState, playerIndex: number): { card: Card, action: 'play' | 'discard', color?: CardColor } => {
+const chooseCardPlay = (state: GameState, playerIndex: number): { card: Card; action: 'play' | 'discard'; color?: CardColor } => {
     const player = state.players[playerIndex];
-    let bestPlay: { value: number, card: Card, action: 'play' | 'discard' } = { value: -Infinity, card: player.hand[0], action: 'discard' };
+    // Initialize with a worst value and default action (discard)
+    let bestPlay = { value: -Infinity, card: player.hand[0], action: 'discard' };
     const committedExpeditions = Object.keys(player.expeditions).filter(color => player.expeditions[color as CardColor].length > 0);
     const gamePhase = analyzeGameState(state);
-
+  
     for (const card of player.hand) {
-        const expedition = player.expeditions[card.color];
-        const lastExpeditionCard = expedition.length > 0 ? expedition[expedition.length - 1] : null;
-        
-        const canPlay = !expedition.length ||
-            (card.value === 'HS' && expedition.every(c => c.value === 'HS')) ||
-            (typeof card.value === 'number' && lastExpeditionCard && (
-                lastExpeditionCard.value === 'HS' ||
-                (typeof lastExpeditionCard.value === 'number' && card.value > lastExpeditionCard.value)
-            ));
-        
-        const basePlayValue = evaluateCard(card, state, playerIndex);
-        const playValue = gamePhase.isVeryLateGame ? basePlayValue + 5 : basePlayValue;
-        
-        if (canPlay) {
-            if (card.value === 'HS') {
-                if (playValue > bestPlay.value) {
-                    bestPlay = { value: playValue, card, action: 'play' };
-                }
-            } else if (expedition.length === 0 && committedExpeditions.length < 3) {
-                if (playValue > bestPlay.value) {
-                    bestPlay = { value: playValue, card, action: 'play' };
-                }
-            } else if (playValue > bestPlay.value) {
-                bestPlay = { value: playValue, card, action: 'play' };
-            }
-        }
-        
-        // Consider discarding
-        let discardValue = -basePlayValue;
-        if ((gamePhase.isMidGame || gamePhase.isLateGame) && expedition.length > 0) {
-            // Extra denial incentive when opponent may benefit from this color
-            discardValue -= 10;
-        }
-        
-        const opponentIndex = (playerIndex + 1) % 2;
-        const opponentValue = evaluateCard(card, state, opponentIndex);
-        const opponentExpedition = state.players[opponentIndex].expeditions[card.color];
-        
-        if (opponentExpedition.length > 0) {
-            const lastOpponentCard = opponentExpedition[opponentExpedition.length - 1];
-            if (typeof lastOpponentCard?.value === 'number' && 
-                typeof card.value === 'number' && 
-                card.value > lastOpponentCard.value) {
-                discardValue -= opponentValue * 1.5;
-            }
-        }
-        if (opponentExpedition.some(c => c.value === 'HS')) {
-            discardValue -= 10; // further penalize discarding when opponent has a handshake
-        }
-
-        if (expedition.length > 0 && typeof card.value === 'number' && card.value >= 7) {
-            discardValue -= 20; // heavy penalty for discarding high number cards when expedition is active
-        }
-
-        // Consider keeping good starter cards
-        if (expedition.length === 0 && typeof card.value === 'number' && card.value <= 4) {
-            const higherCardsInHand = player.hand.filter(c => 
-                c.color === card.color && 
-                typeof c.value === 'number' && 
-                typeof card.value === 'number' &&
-                c.value > card.value
-            ).length;
-            
-            if (higherCardsInHand >= 2) {
-                discardValue -= 15;
-            }
-        }
-
-        // Consider card scarcity
-        const allVisibleCards = [
-            ...Object.values(state.discardPiles).flatMap(pile => pile),
-            ...player.hand,
-            ...Object.values(player.expeditions).flatMap(exp => exp),
-            ...Object.values(state.players[(playerIndex + 1) % 2].expeditions).flatMap(exp => exp)
-        ];
-        const visibleCardsOfColor = allVisibleCards.filter(c => c.color === card.color).length;
-        const remainingCardsOfColor = 12 - visibleCardsOfColor;
-        if (remainingCardsOfColor < 5 && typeof card.value === 'number' && card.value >= 6) {
-            discardValue -= 10;
-        }
-
-        // Consider potential for future expeditions
-        if (typeof card.value === 'number' && card.value >= 5) {
-            const potentialExpeditionValue = calculatePotentialExpeditionValue(
-                [card],
-                player.hand,
-                gamePhase.isLateGame
-            );
-            if (potentialExpeditionValue > 20) {
-                discardValue -= 12;
-            }
-        }
-
-        if (discardValue > bestPlay.value) {
-            bestPlay = { value: discardValue, card, action: 'discard' };
-        }
+      const expedition = player.expeditions[card.color];
+      // Check if the card is legally playable in this expedition
+      const isPlayable =
+        !expedition.length ||
+        (card.value === 'HS' && expedition.every(c => c.value === 'HS')) ||
+        (typeof card.value === 'number' &&
+          expedition.length > 0 &&
+          (expedition[expedition.length - 1].value === 'HS' ||
+            (typeof expedition[expedition.length - 1].value === 'number' && typeof card.value === 'number' && card.value > (expedition[expedition.length - 1].value as number))));
+  
+      const basePlayValue = evaluateCard(card, state, playerIndex);
+      const playValue = gamePhase.isVeryLateGame ? basePlayValue + 5 : basePlayValue;
+  
+      // Only consider the play option if it is legal.
+      if (isPlayable && playValue > bestPlay.value) {
+        bestPlay = { value: playValue, card, action: 'play' };
+      }
+  
+      // Always calculate discard value as an alternative
+      let discardValue = -basePlayValue;
+      // (Add any adjustments for discard here as needed)
+      if (discardValue > bestPlay.value) {
+        bestPlay = { value: discardValue, card, action: 'discard' };
+      }
     }
-
-    return {
-        card: bestPlay.card,
-        action: bestPlay.action,
-        color: bestPlay.action === 'play' ? bestPlay.card.color : undefined
-    };
-};
+  
+    return { card: bestPlay.card, action: bestPlay.action as 'play' | 'discard', color: bestPlay.action === 'play' ? bestPlay.card.color : undefined };
+  };
+  
 
 export const makeAIMove = async (state: GameState, playerIndex: number): Promise<GameState> => {
     // Use a consistent delay instead of random
