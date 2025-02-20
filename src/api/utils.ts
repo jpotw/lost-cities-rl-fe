@@ -2,49 +2,39 @@ import { GameState, Card, CardColor } from '@/types/game';
 
 // Transform the game state for the backend API
 function transformGameStateForBackend(state: GameState) {
+    const transformColor = (color: string) => color.toUpperCase();
+    
+    const transformCard = (card: Card) => ({
+        id: card.id,
+        suit: transformColor(card.color),
+        value: card.value === 'HS' ? 0 : card.value,
+        isHidden: card.isHidden || false
+    });
+
     return {
         currentPlayerIndex: state.currentPlayerIndex,
         gamePhase: state.gamePhase,
+        selectedCard: state.selectedCard ? transformCard(state.selectedCard) : null,
         players: state.players.map(player => ({
             id: player.id,
             name: player.name,
             type: player.type,
-            hand: player.hand.map(card => ({
-                id: card.id,
-                suit: card.color,
-                value: card.value === 'HS' ? 0 : card.value,
-                isHidden: card.isHidden || false
-            })),
+            hand: player.hand.map(transformCard),
             expeditions: Object.fromEntries(
                 Object.entries(player.expeditions).map(([color, cards]) => [
-                    color,
-                    cards.map(card => ({
-                        id: card.id,
-                        suit: card.color,
-                        value: card.value === 'HS' ? 0 : card.value,
-                        isHidden: card.isHidden || false
-                    }))
+                    transformColor(color),
+                    cards.map(transformCard)
                 ])
             ),
             score: player.score
         })),
         discardPiles: Object.fromEntries(
             Object.entries(state.discardPiles).map(([color, cards]) => [
-                color,
-                cards.map(card => ({
-                    id: card.id,
-                    suit: card.color,
-                    value: card.value === 'HS' ? 0 : card.value,
-                    isHidden: card.isHidden || false
-                }))
+                transformColor(color),
+                cards.map(transformCard)
             ])
         ),
-        deck: state.deck.map(card => ({
-            id: card.id,
-            suit: card.color,
-            value: card.value === 'HS' ? 0 : card.value,
-            isHidden: card.isHidden || false
-        }))
+        deck: state.deck.map(transformCard)
     };
 }
 

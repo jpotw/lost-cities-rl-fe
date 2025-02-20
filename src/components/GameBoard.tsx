@@ -9,6 +9,7 @@ import { DiscardPile } from './DiscardPile';
 import { cn } from '@/utils/cn';
 import { getAIMove } from '@/api/utils';
 import { GameResult } from './GameResult';
+import { Deck } from './Deck';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -249,31 +250,12 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
           </div>
 
           {/* Draw deck */}
-          <motion.div 
-            whileHover={gameState.gamePhase === 'DRAW' && gameState.currentPlayerIndex === 0 ? { scale: 1.01 } : {}}
-            className={cn(
-              'relative w-24 h-36 rounded-xl bg-gradient-to-br from-gray-800 to-gray-700',
-              'ring-1 ring-white/10 shadow-lg',
-              gameState.gamePhase === 'DRAW' && gameState.currentPlayerIndex === 0 && 
-              'cursor-pointer hover:shadow-xl hover:from-gray-700 hover:to-gray-600'
-            )}
-            onClick={handleDrawFromDeck}
-          >
-            {/* Stack effect */}
-            {gameState.deck.length > 0 && (
-              <>
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl transform translate-y-1 translate-x-1 -z-10" />
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl transform translate-y-0.5 translate-x-0.5 -z-20" />
-              </>
-            )}
-
-            {/* Card count */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white/40">
-                {gameState.deck.length}
-              </span>
-            </div>
-          </motion.div>
+          <Deck
+            cardsRemaining={gameState.deck.length}
+            isActive={gameState.gamePhase === 'DRAW' && gameState.currentPlayerIndex === 0}
+            onDraw={handleDrawFromDeck}
+            className="transform scale-[0.85]"
+          />
         </div>
 
         {/* Human player area (always at bottom) */}

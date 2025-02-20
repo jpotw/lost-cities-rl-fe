@@ -20,18 +20,39 @@ export const Card = ({ card, isPlayable, onClick, className }: CardProps) => {
     };
 
     const cardBack = (
-        <div className="w-full h-full bg-gradient-to-br from-gray-700/90 to-gray-800/90 
+        <div className="w-full h-full bg-gradient-to-br from-slate-900 via-zinc-900 to-neutral-900
                        rounded-xl flex items-center justify-center relative overflow-hidden">
-            {/* Decorative pattern */}
-            <div className="absolute inset-2 border-2 border-white/5 rounded-lg" />
-            <div className="absolute inset-4 border border-white/5 rounded-lg rotate-45" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
+            {/* Modern mesh gradient effect */}
+            <div className="absolute inset-0 bg-[radial-gradient(100%_50%_at_50%_0%,rgba(56,189,248,0.13)_0,rgba(56,189,248,0)_75%,rgba(56,189,248,0)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(100%_50%_at_50%_100%,rgba(236,72,153,0.13)_0,rgba(236,72,153,0)_75%,rgba(236,72,153,0)_100%)]" />
             
-            {/* Center emblem */}
-            <div className="relative bg-gradient-to-br from-white/10 to-white/5 
-                          w-12 h-12 rounded-full flex items-center justify-center
-                          ring-1 ring-white/10">
-                <div className="text-2xl text-white/30">♠</div>
+            {/* Subtle grid pattern */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]" />
+            
+            {/* Center design */}
+            <div className="relative w-20 h-20 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-sky-400/10 via-transparent to-pink-400/10 rounded-lg transform rotate-45" />
+                <div className="absolute inset-[2px] bg-gradient-to-br from-slate-900 via-zinc-900 to-neutral-900 rounded-lg transform rotate-45" />
+                <div className="absolute inset-[3px] border border-white/10 rounded-lg transform rotate-45" />
+                <div className="text-2xl font-light text-white/30 transform -rotate-45 bg-gradient-to-br from-sky-400/30 to-pink-400/30 bg-clip-text text-transparent">LC</div>
+            </div>
+            
+            {/* Modern corner accents */}
+            <div className="absolute top-3 left-3 w-8 h-8">
+                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-white/20 to-transparent" />
+                <div className="absolute top-0 left-0 w-[2px] h-full bg-gradient-to-b from-white/20 to-transparent" />
+            </div>
+            <div className="absolute top-3 right-3 w-8 h-8">
+                <div className="absolute top-0 right-0 w-full h-[2px] bg-gradient-to-l from-white/20 to-transparent" />
+                <div className="absolute top-0 right-0 w-[2px] h-full bg-gradient-to-b from-white/20 to-transparent" />
+            </div>
+            <div className="absolute bottom-3 left-3 w-8 h-8">
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-white/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 w-[2px] h-full bg-gradient-to-t from-white/20 to-transparent" />
+            </div>
+            <div className="absolute bottom-3 right-3 w-8 h-8">
+                <div className="absolute bottom-0 right-0 w-full h-[2px] bg-gradient-to-l from-white/20 to-transparent" />
+                <div className="absolute bottom-0 right-0 w-[2px] h-full bg-gradient-to-t from-white/20 to-transparent" />
             </div>
         </div>
     );
