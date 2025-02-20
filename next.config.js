@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*', // Keep the /api prefix when forwarding
+        destination: 'http://localhost:7860/api/:path*', // Keep the /api prefix when forwarding
       },
     ];
   },
