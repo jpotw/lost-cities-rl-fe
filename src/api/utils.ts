@@ -1,13 +1,11 @@
 import { GameState } from '@/types/game';
 
-const API_BASE_URL = 'http://localhost:8000';
-
 function transformGameStateForBackend(state: GameState) {
     return {
         ...state,
         players: state.players.map(player => ({
             ...player,
-            hand: player.hand.map(card => ({
+            hand: player.hand.filter(card => card).map(card => ({
                 id: card.id,
                 suit: card.color.toUpperCase(),
                 value: card.value,
@@ -16,7 +14,7 @@ function transformGameStateForBackend(state: GameState) {
             expeditions: Object.fromEntries(
                 Object.entries(player.expeditions).map(([color, cards]) => [
                     color.toUpperCase(),
-                    cards.map(card => ({
+                    cards.filter(card => card).map(card => ({
                         id: card.id,
                         suit: card.color.toUpperCase(),
                         value: card.value,
@@ -28,7 +26,7 @@ function transformGameStateForBackend(state: GameState) {
         discardPiles: Object.fromEntries(
             Object.entries(state.discardPiles).map(([color, cards]) => [
                 color.toUpperCase(),
-                cards.map(card => ({
+                cards.filter(card => card).map(card => ({
                     id: card.id,
                     suit: card.color.toUpperCase(),
                     value: card.value,
@@ -36,7 +34,7 @@ function transformGameStateForBackend(state: GameState) {
                 }))
             ])
         ),
-        deck: state.deck.map(card => ({
+        deck: state.deck.filter(card => card).map(card => ({
             id: card.id,
             suit: card.color.toUpperCase(),
             value: card.value,
@@ -53,7 +51,7 @@ export async function getAIMove(gameState: GameState, maxRetries: number = 5, re
             const transformedState = transformGameStateForBackend(gameState);
             console.log('Sending state to backend:', JSON.stringify(transformedState, null, 2));
             
-            const response = await fetch(`${API_BASE_URL}/api/get_ai_move`, {
+            const response = await fetch(`/api/get_ai_move`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -68,7 +66,6 @@ export async function getAIMove(gameState: GameState, maxRetries: number = 5, re
             }
 
             const data = await response.json();
-            console.log('Received response from backend:', data);
             return data.action;
         } catch (error: any) {
             console.error(`Attempt ${attempts + 1} failed:`, error);

@@ -36,43 +36,61 @@ export const Card = ({ card, isPlayable, onClick, className }: CardProps) => {
         </div>
     );
 
+    const cardContent = card.isHidden ? cardBack : (
+        <div className="relative w-full h-full flex flex-col items-center justify-center">
+            {/* Top-left mini value */}
+            <div className="absolute top-3 left-3 text-sm font-medium opacity-90">
+                {card.value === 'HS' ? '🤝' : card.value}
+            </div>
+            
+            {/* Center value */}
+            <div className="text-5xl font-bold">
+                {card.value === 'HS' ? '🤝' : card.value}
+            </div>
+            
+            {/* Bottom-right mini value */}
+            <div className="absolute bottom-3 right-3 text-sm font-medium opacity-90 rotate-180">
+                {card.value === 'HS' ? '🤝' : card.value}
+            </div>
+
+            {/* Decorative lines */}
+            <div className="absolute inset-4 border-2 border-current opacity-10 rounded-lg" />
+        </div>
+    );
+
+    if (isPlayable) {
+        return (
+            <motion.div
+                whileHover={{ scale: 1.05 }}
+                className={cn(
+                    'w-28 h-40 rounded-xl bg-gradient-to-br backdrop-blur-sm',
+                    'flex flex-col items-center justify-center',
+                    'ring-1 ring-white/10 shadow-lg',
+                    'font-bold transition-all duration-200',
+                    !card.isHidden && colorClasses[card.color],
+                    'cursor-pointer hover:shadow-xl',
+                    className
+                )}
+                onClick={onClick}
+            >
+                {cardContent}
+            </motion.div>
+        );
+    }
+
     return (
-        <motion.div
-            whileHover={undefined}
-            whileTap={undefined}
+        <div
             className={cn(
                 'w-28 h-40 rounded-xl bg-gradient-to-br backdrop-blur-sm',
                 'flex flex-col items-center justify-center',
                 'ring-1 ring-white/10 shadow-lg',
                 'font-bold transition-all duration-200',
                 !card.isHidden && colorClasses[card.color],
-                !isPlayable && 'opacity-75 saturate-50 cursor-default',
-                isPlayable && 'cursor-pointer hover:shadow-xl',
+                'opacity-75 saturate-50 cursor-default',
                 className
             )}
-            onClick={isPlayable ? onClick : undefined}
         >
-            {card.isHidden ? cardBack : (
-                <div className="relative w-full h-full flex flex-col items-center justify-center">
-                    {/* Top-left mini value */}
-                    <div className="absolute top-3 left-3 text-sm font-medium opacity-90">
-                        {card.value === 'HS' ? '🤝' : card.value}
-                    </div>
-                    
-                    {/* Center value */}
-                    <div className="text-5xl font-bold">
-                        {card.value === 'HS' ? '🤝' : card.value}
-                    </div>
-                    
-                    {/* Bottom-right mini value */}
-                    <div className="absolute bottom-3 right-3 text-sm font-medium opacity-90 rotate-180">
-                        {card.value === 'HS' ? '🤝' : card.value}
-                    </div>
-
-                    {/* Decorative lines */}
-                    <div className="absolute inset-4 border-2 border-current opacity-10 rounded-lg" />
-                </div>
-            )}
-        </motion.div>
+            {cardContent}
+        </div>
     );
 }; 

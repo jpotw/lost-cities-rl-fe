@@ -20,6 +20,7 @@ export const PlayerHand = ({
 }: PlayerHandProps) => {
   return (
     <motion.div
+      key="player-hand-container"
       className={cn(
         'flex gap-4 items-center justify-center',
         className

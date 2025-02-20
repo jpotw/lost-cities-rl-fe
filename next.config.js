@@ -1,6 +1,12 @@
-/** @type {import('./fe/node_modules/next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8000/api/:path*', // Keep the /api prefix when forwarding
+      },
+    ];
+  },
 };
-
-module.exports = nextConfig; 
+module.exports = nextConfig;
