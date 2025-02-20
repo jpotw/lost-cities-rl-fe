@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { GameBoard } from '@/components/GameBoard';
 import { createInitialGameState } from '@/utils/gameUtils';
 import type { GameState } from '@/types/game';
@@ -56,8 +57,8 @@ const emptyGameState: GameState = {
   isAIThinking: false
 };
 
-
 export default function Home() {
+  const router = useRouter();
   const [gameState, setGameState] = useState<GameState>(emptyGameState);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -73,9 +74,17 @@ export default function Home() {
   };
 
   return (
-    <GameBoard
-      gameState={gameState}
-      onGameAction={handleGameAction}
-    />
+    <div className="h-screen overflow-hidden">
+      <button
+        onClick={() => router.push('/how-to-play')}
+        className="fixed top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg z-50"
+      >
+        How to Play
+      </button>
+      <GameBoard
+        gameState={gameState}
+        onGameAction={handleGameAction}
+      />
+    </div>
   );
 }
