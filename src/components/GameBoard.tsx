@@ -6,8 +6,7 @@ import { GameAction } from '@/reducers/gameReducer';
 import { PlayerHand } from './PlayerHand';
 import { Expedition } from './Expedition';
 import { DiscardPile } from './DiscardPile';
-import { cn } from '@/utils/cn';
-import { getAIMove } from '@/api/utils';
+import { getAIMove, startNewGame } from '@/api/utils';
 import { GameResult } from './GameResult';
 import { Deck } from './Deck';
 
@@ -171,6 +170,15 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     onGameAction({ type: 'RESET_GAME' });
   };
 
+  const handleStartNewGame = async () => {
+    try {
+      const newGameState = await startNewGame();
+      onGameAction({ type: 'SET_GAME_STATE', payload: newGameState });
+    } catch (error) {
+      console.error('Failed to start new game:', error);
+    }
+  };
+
   // Only render client-side content after hydration
   if (!isClient) {
     return <div className="min-h-screen bg-gray-900" />;
@@ -180,6 +188,17 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     <div className="h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4 relative">
       {/* Game board */}
       <div className="h-full flex flex-col justify-between max-w-7xl mx-auto py-2 pr-12">
+        {/* Game controls */}
+        <div className="absolute top-4 right-4 flex gap-4">
+          <button
+            onClick={handleStartNewGame}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg 
+                     transition-colors duration-200 font-semibold text-white"
+          >
+            Start New Game
+          </button>
+        </div>
+
         {/* AI area (always at top) */}
         <div className="flex justify-center mb-2">
           <PlayerHand

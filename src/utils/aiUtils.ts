@@ -414,10 +414,10 @@ const chooseDrawSource = (state: GameState, playerIndex: number): { type: 'deck'
 
 const chooseCardPlay = (state: GameState, playerIndex: number): { card: Card; action: 'play' | 'discard'; color?: CardColor } => {
     const player = state.players[playerIndex];
+    const gamePhase = analyzeGameState(state);
+
     // Initialize with a worst value and default action (discard)
     let bestPlay = { value: -Infinity, card: player.hand[0], action: 'discard' };
-    const committedExpeditions = Object.keys(player.expeditions).filter(color => player.expeditions[color as CardColor].length > 0);
-    const gamePhase = analyzeGameState(state);
   
     for (const card of player.hand) {
       const expedition = player.expeditions[card.color];
@@ -439,7 +439,7 @@ const chooseCardPlay = (state: GameState, playerIndex: number): { card: Card; ac
       }
   
       // Always calculate discard value as an alternative
-      let discardValue = -basePlayValue;
+      const discardValue = -basePlayValue;
       // (Add any adjustments for discard here as needed)
       if (discardValue > bestPlay.value) {
         bestPlay = { value: discardValue, card, action: 'discard' };

@@ -10,7 +10,8 @@ export type GameAction =
     | { type: 'START_AI_TURN' }
     | { type: 'END_AI_TURN' }
     | { type: 'SET_LAST_DISCARDED'; payload: { color: CardColor; cardId: string } }
-    | { type: 'RESET_GAME' };
+    | { type: 'RESET_GAME' }
+    | { type: 'SET_GAME_STATE'; payload: GameState };
 
 const canPlayCard = (card: Card, expedition: Card[]): boolean => {
     /*
@@ -37,6 +38,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     - `START_AI_TURN`: start the AI's turn
     */
     switch (action.type) {
+        case 'SET_GAME_STATE':
+            return action.payload;
+        
         case 'SELECT_CARD': {
             return {
                 ...state,
