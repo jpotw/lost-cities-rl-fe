@@ -1,6 +1,5 @@
 import { GameState, Card, CardColor, PlayerType, GamePhase } from '@/types/game';
-import {SECRET_KEY} from '@/env.local';
-
+import { SECRET_KEY } from '@/constants';
 
 interface BackendCard {
     id: number;
@@ -129,7 +128,7 @@ export async function startNewGame(): Promise<GameState> {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Authorization': `Bearer ${SECRET_KEY}`,
             },
             redirect: 'follow', // Follow any redirects
         });
