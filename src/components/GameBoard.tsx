@@ -9,6 +9,7 @@ import { DiscardPile } from './DiscardPile';
 import { getAIMove, startNewGame } from '@/api/utils';
 import { GameResult } from './GameResult';
 import { Deck } from './Deck';
+import { useRouter } from 'next/navigation';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -16,7 +17,9 @@ interface GameBoardProps {
 }
 
 export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
+  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sounds, setSounds] = useState<{
     playCard: HTMLAudioElement | null;
     drawCard: HTMLAudioElement | null;
@@ -187,16 +190,56 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4 relative">
       {/* Game board */}
-      <div className="h-full flex flex-col justify-between max-w-7xl mx-auto py-2 pr-12">
-        {/* Game controls */}
-        <div className="absolute top-4 right-4 flex gap-4">
+      <div className="h-full flex flex-col justify-between max-w-7xl mx-auto py-2">
+        {/* Game controls - Toggle Menu */}
+        <div className="fixed top-4 right-4 z-50">
           <button
-            onClick={handleStartNewGame}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg 
-                     transition-colors duration-200 font-semibold text-white"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg
+                     flex items-center gap-2 transition-colors duration-200"
           >
-            Start New Game
+            Menu
+            <svg 
+              className={`w-4 h-4 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
+          
+          {/* Dropdown Menu */}
+          {isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full right-0 mt-2 w-48 rounded-lg shadow-lg 
+                       bg-gray-600 backdrop-blur-sm ring-1 ring-white/10"
+            >
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    handleStartNewGame();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10"
+                >
+                  Start New Game
+                </button>
+                <button
+                  onClick={() => {
+                    router.push('/how-to-play');
+                    setIsMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10"
+                >
+                  How to Play
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* AI area (always at top) */}

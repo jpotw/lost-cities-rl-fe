@@ -75,12 +75,6 @@ export default function Home() {
 
   return (
     <div className="h-screen overflow-hidden">
-      <button
-        onClick={() => router.push('/how-to-play')}
-        className="fixed top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg z-50"
-      >
-        How to Play
-      </button>
       <GameBoard
         gameState={gameState}
         onGameAction={handleGameAction}

@@ -86,12 +86,18 @@ function transformGameStateFromBackend(state: BackendGameState): GameState {
 function transformGameStateForBackend(state: GameState) {
     const transformColor = (color: string) => color.toUpperCase();
     
-    const transformCard = (card: Card) => ({
-        id: card.id,
-        suit: transformColor(card.color),
-        value: card.value === 'HS' ? 0 : card.value,
-        isHidden: card.isHidden || false
-    });
+    const transformCard = (card: Card) => {
+        if (!card) {
+            console.warn('Attempted to transform undefined or null card');
+            return null;
+        }
+        return {
+            id: card.id,
+            suit: transformColor(card.color),
+            value: card.value === 'HS' ? 0 : card.value,
+            isHidden: card.isHidden || false
+        };
+    };
 
     return {
         currentPlayerIndex: state.currentPlayerIndex,

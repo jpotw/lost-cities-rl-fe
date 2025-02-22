@@ -13,7 +13,7 @@ const HowToPlay = () => {
   const router = useRouter();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <button
         onClick={() => router.push('/')}
         className="fixed top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg z-50"
@@ -24,21 +24,21 @@ const HowToPlay = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-3xl w-full bg-white dark:bg-black rounded-3xl shadow-2xl p-10"
+        className="max-w-3xl w-full rounded-3xl shadow-2xl p-10"
       >
         <motion.h1 
-          className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-yellow-500 mb-6 text-center"
+          className="text-4xl md:text-5xl font-bold text-yellow-500 mb-6 text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
           How to Play Lost Cities
         </motion.h1>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+        <p className="text-lg text-gray-300 mb-6">
          citation: <a href="https://boardgamegeek.com/boardgame/50/lost-cities" className="text-blue-500 hover:text-blue-700">https://boardgamegeek.com/boardgame/50/lost-cities</a>
         </p>
         <motion.p 
-          className="text-lg text-gray-700 dark:text-gray-300 mb-6"
+          className="text-lg text-gray-300 mb-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
@@ -47,7 +47,7 @@ const HowToPlay = () => {
         </motion.p>
 
         <motion.h2 
-          className="text-2xl font-semibold text-gray-800 dark:text-yellow-500 mt-8 mb-4"
+          className="text-2xl font-semibold text-yellow-500 mt-8 mb-4"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
@@ -55,7 +55,7 @@ const HowToPlay = () => {
           Objective
         </motion.h2>
         <motion.p 
-          className="text-lg text-gray-700 dark:text-gray-300 mb-6"
+          className="text-lg text-gray-300 mb-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.6 }}
@@ -64,7 +64,7 @@ const HowToPlay = () => {
         </motion.p>
 
         <motion.h2 
-          className="text-2xl font-semibold text-gray-800 dark:text-yellow-500 mt-8 mb-4"
+          className="text-2xl font-semibold text-yellow-500 mt-8 mb-4"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 1.0, duration: 0.5 }}
@@ -72,7 +72,7 @@ const HowToPlay = () => {
           Game Progression
         </motion.h2>
         <motion.p 
-          className="text-lg text-gray-700 dark:text-gray-300 mb-6"
+          className="text-lg text-gray-300 mb-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.6 }}
@@ -81,7 +81,7 @@ const HowToPlay = () => {
         </motion.p>
 
         <motion.h2 
-          className="text-2xl font-semibold text-gray-800 dark:text-yellow-500 mt-8 mb-4"
+          className="text-2xl font-semibold text-yellow-500 mt-8 mb-4"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 1.4, duration: 0.5 }}
@@ -90,7 +90,7 @@ const HowToPlay = () => {
         </motion.h2>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.6 }}>
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-gray-300 mb-4">
             <strong>Example 1:</strong> An expedition has a 2,3,7,8,10 for a total of 30. This expedition is worth 10 total points: 30 plus the initial -20.
           </p>
           <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
