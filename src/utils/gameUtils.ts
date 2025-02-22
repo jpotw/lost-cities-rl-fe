@@ -141,10 +141,10 @@ export const calculateScore = (player: Player): number => {
 
     // Calculate raw points and multipliers
     expedition.forEach((card: Card) => {
-      if (card.value === 0) {
+      if (card.value === 'HS') {
         multiplier += 1;
-      } else {
-        expeditionScore += Number(card.value);
+      } else if (typeof card.value === 'number') {
+        expeditionScore += card.value;
       }
     });
 
