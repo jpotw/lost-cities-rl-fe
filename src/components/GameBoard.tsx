@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import { Card as CardType, CardColor, GameState } from '@/types/game';
 import { COLORS } from '@/utils/gameUtils';
 import { GameAction } from '@/reducers/gameReducer';
-import { makeAIMove } from '@/utils/aiUtils';
 import { PlayerHand } from './PlayerHand';
 import { Expedition } from './Expedition';
 import { DiscardPile } from './DiscardPile';
-import { cn } from '@/utils/cn';
+import { getAIMove, startNewGame } from '@/api/utils';
+import { GameResult } from './GameResult';
+import { Deck } from './Deck';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -55,94 +56,73 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     const handleAITurn = async () => {
       if (gameState.currentPlayerIndex === 1 && !gameState.isAIThinking && gameState.gamePhase !== 'GAME_OVER') {
         onGameAction({ type: 'START_AI_TURN' });
-
         try {
-          const aiState = await makeAIMove(gameState, 1);
-
-          if (aiState.gamePhase === 'DRAW') {
-            // Apply the AI's play move by comparing the states
-            const playedCard = gameState.players[1].hand.find(c => 
-              !aiState.players[1].hand.some(ac => ac.id === c.id)
-            );
-
-            if (!playedCard) return;
-
-            // Check if card was played to expedition or discarded
-            const wasPlayedToExpedition = Object.values(aiState.players[1].expeditions).some(exp =>
-              exp.some(c => c.id === playedCard.id)
-            );
-
-            if (wasPlayedToExpedition) {
-              onGameAction({
-                type: 'PLAY_CARD',
-                payload: { 
-                  card: { ...playedCard, isHidden: false },
-                  color: playedCard.color 
-                }
-              });
-              playSound('playCard');
-            } else {
-              onGameAction({ 
-                type: 'DISCARD_CARD', 
-                payload: { ...playedCard, isHidden: false }
-              });
-              onGameAction({ 
-                type: 'SET_LAST_DISCARDED', 
-                payload: { 
-                  color: playedCard.color, 
-                  cardId: playedCard.id 
-                }
-              });
-              playSound('discard');
+          const aiAction = await getAIMove(gameState); // Get the AI move from the API
+            // Convert the action received from the API to your game action format
+            const cardIndex = aiAction[0];
+            const playOrDiscard = aiAction[1];  // 0 for play, 1 for discard
+            const drawSource = aiAction[2];   // 0 for deck, 1-5 for discard piles
+            const aiPlayer = gameState.players.find(p => p.type === 'AI');
+            if (!aiPlayer) {
+                console.error("AI player not found");
+                return;
             }
-
+            if (cardIndex >= aiPlayer.hand.length) {
+                console.error("Invalid card index from AI");
+                return;
+            }
+            const selectedCard = aiPlayer.hand[cardIndex];
+            if (playOrDiscard === 0) {
+                //play card
+                onGameAction({
+                    type: 'PLAY_CARD',
+                    payload: {
+                    card: { ...selectedCard, isHidden: false },
+                    color: selectedCard.color
+                    }
+                });
+                playSound('playCard');
+            }
+            else{
+                //discard card
+                onGameAction({
+                    type: 'DISCARD_CARD',
+                    payload: { ...selectedCard, isHidden: false }
+                });
+                onGameAction({
+                    type: 'SET_LAST_DISCARDED',
+                    payload: {
+                    color: selectedCard.color,
+                    cardId: String(selectedCard.id)
+                    }
+                });
+                playSound('discard');
+            }
             await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Make draw choice on client side only
-            if (Math.random() > 0.5 && Object.values(gameState.discardPiles).some(pile => pile.length > 0)) {
-              const availableColors = Object.entries(gameState.discardPiles)
-                .filter(([color, pile]) => {
-                  if (pile.length === 0) return false;
-                  const topCard = pile[pile.length - 1];
-                  if (typeof topCard.value === 'number' && 
-                    topCard.value < 4 && 
-                    aiPlayer.expeditions[color as CardColor].length === 0) {
-                    return false;
-                  }
-                  return !(gameState.lastDiscarded && 
-                    gameState.lastDiscarded.color === color && 
-                    gameState.lastDiscarded.cardId === topCard.id);
-                })
-                .map(([color]) => color as CardColor);
-
-              if (availableColors.length > 0) {
-                const priorityColors = availableColors.filter(color => 
-                  aiPlayer.expeditions[color].length > 0
-                );
-                const randomColor = priorityColors.length > 0
-                  ? priorityColors[Math.floor(Math.random() * priorityColors.length)]
-                  : availableColors[Math.floor(Math.random() * availableColors.length)];
-                onGameAction({ type: 'DRAW_FROM_DISCARD', payload: randomColor });
-              } else {
+            //draw
+            if (drawSource === 0) {
+                //draw from deck
                 onGameAction({ type: 'DRAW_FROM_DECK' });
-              }
-            } else {
-              onGameAction({ type: 'DRAW_FROM_DECK' });
+
+            }
+            else{
+                //draw from discard
+                const color = COLORS[drawSource - 1]; // Convert index to color
+                onGameAction({ type: 'DRAW_FROM_DISCARD', payload: color });
             }
             playSound('drawCard');
-
             await new Promise(resolve => setTimeout(resolve, 500));
             onGameAction({ type: 'END_AI_TURN' });
-          }
+
         } catch (error) {
           console.error('Error during AI turn:', error);
           onGameAction({ type: 'END_AI_TURN' });
         }
       }
     };
-
-    handleAITurn();
-  }, [isClient, gameState, onGameAction, aiPlayer.expeditions, playSound]);
+  
+      handleAITurn();
+    }, [isClient, gameState, onGameAction, playSound]);
 
   const handleCardSelect = (card: CardType) => {
     console.log('Card selected:', card);
@@ -166,7 +146,7 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
       onGameAction({ type: 'DISCARD_CARD', payload: card });
       onGameAction({ 
         type: 'SET_LAST_DISCARDED', 
-        payload: { color: card.color, cardId: card.id }
+        payload: { color: card.color, cardId: String(card.id) }
       });
       playSound('discard');
     }
@@ -186,6 +166,19 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     }
   };
 
+  const handlePlayAgain = () => {
+    onGameAction({ type: 'RESET_GAME' });
+  };
+
+  const handleStartNewGame = async () => {
+    try {
+      const newGameState = await startNewGame();
+      onGameAction({ type: 'SET_GAME_STATE', payload: newGameState });
+    } catch (error) {
+      console.error('Failed to start new game:', error);
+    }
+  };
+
   // Only render client-side content after hydration
   if (!isClient) {
     return <div className="min-h-screen bg-gray-900" />;
@@ -195,6 +188,17 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     <div className="h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4 relative">
       {/* Game board */}
       <div className="h-full flex flex-col justify-between max-w-7xl mx-auto py-2 pr-12">
+        {/* Game controls */}
+        <div className="absolute top-4 right-4 flex gap-4">
+          <button
+            onClick={handleStartNewGame}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg 
+                     transition-colors duration-200 font-semibold text-white"
+          >
+            Start New Game
+          </button>
+        </div>
+
         {/* AI area (always at top) */}
         <div className="flex justify-center mb-2">
           <PlayerHand
@@ -265,31 +269,12 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
           </div>
 
           {/* Draw deck */}
-          <motion.div 
-            whileHover={gameState.gamePhase === 'DRAW' && gameState.currentPlayerIndex === 0 ? { scale: 1.01 } : {}}
-            className={cn(
-              'relative w-24 h-36 rounded-xl bg-gradient-to-br from-gray-800 to-gray-700',
-              'ring-1 ring-white/10 shadow-lg',
-              gameState.gamePhase === 'DRAW' && gameState.currentPlayerIndex === 0 && 
-              'cursor-pointer hover:shadow-xl hover:from-gray-700 hover:to-gray-600'
-            )}
-            onClick={handleDrawFromDeck}
-          >
-            {/* Stack effect */}
-            {gameState.deck.length > 0 && (
-              <>
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl transform translate-y-1 translate-x-1 -z-10" />
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl transform translate-y-0.5 translate-x-0.5 -z-20" />
-              </>
-            )}
-
-            {/* Card count */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white/40">
-                {gameState.deck.length}
-              </span>
-            </div>
-          </motion.div>
+          <Deck
+            cardsRemaining={gameState.deck.length}
+            isActive={gameState.gamePhase === 'DRAW' && gameState.currentPlayerIndex === 0}
+            onDraw={handleDrawFromDeck}
+            className="transform scale-[0.85]"
+          />
         </div>
 
         {/* Human player area (always at bottom) */}
@@ -317,6 +302,14 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
           </motion.div>
         </div>
       </div>
+
+      {/* Show game result screen when game is over */}
+      {gameState.gamePhase === 'GAME_OVER' && (
+        <GameResult 
+          players={gameState.players}
+          onPlayAgain={handlePlayAgain}
+        />
+      )}
     </div>
   );
 }; 

@@ -27,7 +27,7 @@ export const PlayerHand = ({
     >
       {cards.map((card, index) => (
         <motion.div
-          key={card.id}
+          key={`card-${card.id}`}
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
