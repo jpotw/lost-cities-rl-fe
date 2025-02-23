@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card as CardType, CardColor, GameState } from '@/types/game';
@@ -17,7 +19,6 @@ interface GameBoardProps {
 }
 
 export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
-  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sounds, setSounds] = useState<{
@@ -25,13 +26,12 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     drawCard: HTMLAudioElement | null;
     discard: HTMLAudioElement | null;
   }>({ playCard: null, drawCard: null, discard: null });
+  const router = useRouter();
 
-  // Mark component as client-side rendered
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Initialize sounds on client side only
   useEffect(() => {
     if (isClient) {
       setSounds({
@@ -48,97 +48,107 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     }
   }, [sounds]);
 
-  // Always keep human player at bottom and AI at top
   const humanPlayer = gameState.players.find(p => p.type === 'HUMAN')!;
   const aiPlayer = gameState.players.find(p => p.type === 'AI')!;
 
-  // Handle AI turn on client side only
   useEffect(() => {
     if (!isClient) return;
 
     const handleAITurn = async () => {
-      if (gameState.currentPlayerIndex === 1 && !gameState.isAIThinking && gameState.gamePhase !== 'GAME_OVER') {
+      if (
+        gameState.currentPlayerIndex === 1 &&
+        !gameState.isAIThinking &&
+        gameState.gamePhase === 'PLAY' &&
+        aiPlayer.hand.length > 0
+      ) {
+        console.log('AI Turn Start - Hand Size:', aiPlayer.hand.length);
         onGameAction({ type: 'START_AI_TURN' });
+
         try {
-          const aiAction = await getAIMove(gameState); // Get the AI move from the API
-            // Convert the action received from the API to your game action format
-            const cardIndex = aiAction[0];
-            const playOrDiscard = aiAction[1];  // 0 for play, 1 for discard
-            const drawSource = aiAction[2];   // 0 for deck, 1-5 for discard piles
-            const aiPlayer = gameState.players.find(p => p.type === 'AI');
-            if (!aiPlayer) {
-                console.error("AI player not found");
-                return;
-            }
-            if (cardIndex >= aiPlayer.hand.length) {
-                console.error("Invalid card index from AI");
-                return;
-            }
-            const selectedCard = aiPlayer.hand[cardIndex];
-            if (playOrDiscard === 0) {
-                //play card
-                onGameAction({
-                    type: 'PLAY_CARD',
-                    payload: {
-                    card: { ...selectedCard, isHidden: false },
-                    color: selectedCard.color
-                    }
-                });
-                playSound('playCard');
-            }
-            else{
-                //discard card
-                onGameAction({
-                    type: 'DISCARD_CARD',
-                    payload: { ...selectedCard, isHidden: false }
-                });
-                onGameAction({
-                    type: 'SET_LAST_DISCARDED',
-                    payload: {
-                    color: selectedCard.color,
-                    cardId: String(selectedCard.id)
-                    }
-                });
-                playSound('discard');
-            }
-            await new Promise(resolve => setTimeout(resolve, 500));
-            //draw
-            if (drawSource === 0) {
-                //draw from deck
-                onGameAction({ type: 'DRAW_FROM_DECK' });
+          const [cardIndex, playOrDiscard, drawSource] = await getAIMove(gameState);
+          console.log('Backend AI Action:', { cardIndex, playOrDiscard, drawSource });
 
-            }
-            else{
-                //draw from discard
-                const color = COLORS[drawSource - 1]; // Convert index to color
-                onGameAction({ type: 'DRAW_FROM_DISCARD', payload: color });
-            }
-            playSound('drawCard');
-            await new Promise(resolve => setTimeout(resolve, 500));
-            onGameAction({ type: 'END_AI_TURN' });
+          if (cardIndex < 0 || cardIndex >= aiPlayer.hand.length) {
+            console.error('Invalid cardIndex from backend:', cardIndex, 'Hand length:', aiPlayer.hand.length);
+            throw new Error('Invalid card index');
+          }
+          if (![0, 1].includes(playOrDiscard)) {
+            console.error('Invalid playOrDiscard from backend:', playOrDiscard);
+            throw new Error('Invalid play/discard choice');
+          }
+          if (drawSource < 0 || drawSource > 6) {
+            console.error('Invalid drawSource from backend:', drawSource);
+            throw new Error('Invalid draw source');
+          }
 
+          const selectedCard = { ...aiPlayer.hand[cardIndex], isHidden: false };
+
+          if (playOrDiscard === 0) {
+            onGameAction({
+              type: 'PLAY_CARD',
+              payload: { card: selectedCard, color: selectedCard.color },
+            });
+            playSound('playCard');
+          } else {
+            onGameAction({ type: 'DISCARD_CARD', payload: selectedCard });
+            onGameAction({
+              type: 'SET_LAST_DISCARDED',
+              payload: { color: selectedCard.color, cardId: String(selectedCard.id) },
+            });
+            playSound('discard');
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          if (drawSource === 0) {
+            if (gameState.deck.length > 0) {
+              onGameAction({ type: 'DRAW_FROM_DECK' });
+              playSound('drawCard');
+            } else {
+              console.warn('Deck empty, skipping draw');
+            }
+          } else {
+            const color = COLORS[drawSource - 1];
+            if (gameState.discardPiles[color].length > 0) {
+              onGameAction({ type: 'DRAW_FROM_DISCARD', payload: color });
+              playSound('drawCard');
+            } else if (gameState.deck.length > 0) {
+              console.warn(`Discard pile ${color} empty, drawing from deck`);
+              onGameAction({ type: 'DRAW_FROM_DECK' });
+              playSound('drawCard');
+            } else {
+              console.warn('No cards available to draw');
+            }
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 500));
+          console.log('AI Turn End - Hand Size:', aiPlayer.hand.length);
+          onGameAction({ type: 'END_AI_TURN' });
         } catch (error) {
           console.error('Error during AI turn:', error);
           onGameAction({ type: 'END_AI_TURN' });
         }
       }
     };
-  
-      handleAITurn();
-    }, [isClient, gameState, onGameAction, playSound]);
+
+    handleAITurn();
+  }, [isClient, gameState, onGameAction, playSound, aiPlayer.hand]);
 
   const handleCardSelect = (card: CardType) => {
-    console.log('Card selected:', card);
     if (gameState.currentPlayerIndex === 0 && gameState.gamePhase === 'PLAY') {
       onGameAction({ type: 'SELECT_CARD', payload: card });
     }
   };
 
   const handleExpeditionPlay = (color: CardColor) => {
-    if (gameState.selectedCard && gameState.currentPlayerIndex === 0 && gameState.gamePhase === 'PLAY') {
-      onGameAction({ 
-        type: 'PLAY_CARD', 
-        payload: { card: gameState.selectedCard, color } 
+    if (
+      gameState.selectedCard &&
+      gameState.currentPlayerIndex === 0 &&
+      gameState.gamePhase === 'PLAY'
+    ) {
+      onGameAction({
+        type: 'PLAY_CARD',
+        payload: { card: gameState.selectedCard, color },
       });
       playSound('playCard');
     }
@@ -147,9 +157,9 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
   const handleDiscard = (card: CardType) => {
     if (gameState.currentPlayerIndex === 0 && gameState.gamePhase === 'PLAY') {
       onGameAction({ type: 'DISCARD_CARD', payload: card });
-      onGameAction({ 
-        type: 'SET_LAST_DISCARDED', 
-        payload: { color: card.color, cardId: String(card.id) }
+      onGameAction({
+        type: 'SET_LAST_DISCARDED',
+        payload: { color: card.color, cardId: String(card.id) },
       });
       playSound('discard');
     }
@@ -175,74 +185,88 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
 
   const handleStartNewGame = async () => {
     try {
+      console.log('Starting new game...');
       const newGameState = await startNewGame();
+      console.log('New Game State:', JSON.stringify(newGameState, null, 2));
+
+      const allCardIds = [
+        ...newGameState.players[0].hand.map(card => card.id),
+        ...newGameState.players[1].hand.map(card => card.id),
+        ...newGameState.deck.map(card => card.id),
+      ];
+      const uniqueIds = new Set(allCardIds);
+      if (uniqueIds.size !== allCardIds.length) {
+        console.error('Duplicate card IDs detected:', allCardIds);
+      }
+
       onGameAction({ type: 'SET_GAME_STATE', payload: newGameState });
+      setIsMenuOpen(false);
     } catch (error) {
       console.error('Failed to start new game:', error);
     }
   };
 
-  // Only render client-side content after hydration
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => !prev);
+  };
+
+  const handleHowToPlay = () => {
+    router.push('/how-to-play');
+    setIsMenuOpen(false);
+  };
+
   if (!isClient) {
     return <div className="min-h-screen bg-gray-900" />;
   }
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4 relative">
-      {/* Game board */}
-      <div className="h-full flex flex-col justify-between max-w-7xl mx-auto py-2">
-        {/* Game controls - Toggle Menu */}
-        <div className="fixed top-4 right-4 z-50">
+      <div className="h-full flex flex-col justify-between max-w-7xl mx-auto py-2 pr-12">
+        <div className="absolute top-4 right-4 z-50">
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg
-                     flex items-center gap-2 transition-colors duration-200"
+            onClick={toggleMenu}
+            className="px-4 py-2.5 bg-gray-800/80 hover:bg-gray-700/80 rounded-xl shadow-lg 
+                     transition-all duration-300 font-medium text-gray-200 flex items-center gap-2.5
+                     backdrop-blur-sm ring-1 ring-white/10 hover:ring-white/20"
           >
-            Menu
-            <svg 
-              className={`w-4 h-4 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
+            <span>Menu</span>
           </button>
-          
-          {/* Dropdown Menu */}
           {isMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full right-0 mt-2 w-48 rounded-lg shadow-lg 
-                       bg-gray-600 backdrop-blur-sm ring-1 ring-white/10"
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-14 right-0 bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-xl 
+                       p-1.5 w-56 ring-1 ring-white/10"
             >
-              <div className="py-1">
-                <button
-                  onClick={() => {
-                    handleStartNewGame();
-                    setIsMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10"
-                >
-                  Start New Game
-                </button>
-                <button
-                  onClick={() => {
-                    router.push('/how-to-play');
-                    setIsMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10"
-                >
-                  How to Play
-                </button>
-              </div>
+              <button
+                onClick={handleStartNewGame}
+                className="w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-lg transition-all duration-200
+                         text-gray-200 flex items-center gap-3 group"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 group-hover:text-sky-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>New Game</span>
+              </button>
+              <button
+                onClick={handleHowToPlay}
+                className="w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-lg transition-all duration-200
+                         text-gray-200 flex items-center gap-3 group"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 group-hover:text-sky-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>How to Play</span>
+              </button>
             </motion.div>
           )}
         </div>
 
-        {/* AI area (always at top) */}
         <div className="flex justify-center mb-2">
           <PlayerHand
             cards={aiPlayer.hand.map(card => ({ ...card, isHidden: true }))}
@@ -252,10 +276,8 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
         </div>
 
         <div className="flex-1 flex justify-end items-center gap-8 mr-24">
-          {/* Shared expedition area */}
           <div className="flex flex-col items-center gap-4 bg-gradient-to-br from-gray-800/50 to-gray-900/50 
                          backdrop-blur-sm rounded-3xl p-6 ring-1 ring-white/10 shadow-2xl">
-            {/* AI expeditions */}
             <div className="flex gap-3">
               {COLORS.map(color => (
                 <div key={color} className="flex flex-col items-center">
@@ -269,7 +291,6 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
               ))}
             </div>
 
-            {/* Discard piles in the middle */}
             <div className="flex gap-3">
               {COLORS.map(color => (
                 <DiscardPile
@@ -291,7 +312,6 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
               ))}
             </div>
 
-            {/* Human player expeditions */}
             <div className="flex gap-3">
               {COLORS.map(color => (
                 <div key={color} className="flex flex-col items-center">
@@ -311,7 +331,6 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
             </div>
           </div>
 
-          {/* Draw deck */}
           <Deck
             cardsRemaining={gameState.deck.length}
             isActive={gameState.gamePhase === 'DRAW' && gameState.currentPlayerIndex === 0}
@@ -320,7 +339,6 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
           />
         </div>
 
-        {/* Human player area (always at bottom) */}
         <div className="flex justify-center mt-2">
           <PlayerHand
             cards={humanPlayer.hand}
@@ -331,12 +349,11 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
           />
         </div>
 
-        {/* Game phase indicator */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
           <motion.div
             animate={{
               scale: [1, 1.05, 1],
-              transition: { duration: 2, repeat: Infinity }
+              transition: { duration: 2, repeat: Infinity },
             }}
             className="px-6 py-3 bg-gradient-to-r from-gray-800/80 to-gray-700/80 backdrop-blur-sm
                       rounded-full text-sm font-medium text-white/80 shadow-lg ring-1 ring-white/10"
@@ -346,13 +363,9 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
         </div>
       </div>
 
-      {/* Show game result screen when game is over */}
       {gameState.gamePhase === 'GAME_OVER' && (
-        <GameResult 
-          players={gameState.players}
-          onPlayAgain={handlePlayAgain}
-        />
+        <GameResult players={gameState.players} onPlayAgain={handlePlayAgain} />
       )}
     </div>
   );
-}; 
+};
