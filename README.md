@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Welcome to the Lost Cities Game, featuring a cutting-edge AI opponent.
 
-## Getting Started
+This AI is powered by advanced Reinforcement Learning (PPO) with a bespoke reward function, designed to elevate your gaming experience.
 
-First, run the development server:
+<br>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Game Rules
+![how to play](/public/images/how-to-play.png)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Game Snapshots
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+![game-example-1](/public/images/game-example-1.png)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+![game-example-2](/public/images/game-example-2.png)
 
-## Learn More
+<br>
 
-To learn more about Next.js, take a look at the following resources:
+Currently it sucks at the game. The AI is still in training. Will update the README when it gets better.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+<br>
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Launching the Project
 
-## Deploy on Vercel
+1. **Backend Repository Setup**  
+   Begin by cloning the backend repository from GitHub:  
+   [Lost Cities RL Backend](https://github.com/jpotw/lost-cities-rl-be)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Virtual Environment & Dependencies**  
+   Set up a virtual environment, activate it, and install the necessary dependencies:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate 
+   # On Windows: . venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Initiate the Backend Server**  
+   Fire up the backend server with the command:
+   ```bash
+   uvicorn app.main:app --reload --port 8080
+   ```
+
+4. **Frontend Repository Setup**  
+   Clone the frontend repository from GitHub:  
+   [Lost Cities RL Frontend](https://github.com/jpotw/lost-cities-rl-fe)
+
+5. **Frontend Dependencies Installation**  
+   Navigate to the frontend directory and install all dependencies:
+   ```bash
+   yarn install
+   ```
+
+6. **Launch the Frontend Server**  
+   Start the frontend server using:
+   ```bash
+   yarn dev
+   ```
+
+7. **Experience the Game**  
+   Dive into the game by visiting:  
+   [http://localhost:3000/](http://localhost:3000/)
