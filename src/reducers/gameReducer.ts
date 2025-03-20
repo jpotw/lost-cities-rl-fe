@@ -126,13 +126,20 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                 };
             }
             
+            // Ensure drawn card has proper values
+            const validDrawnCard = {
+                ...drawnCard,
+                value: drawnCard.value === 0 ? 'HS' : drawnCard.value,
+                color: drawnCard.color || 'red' // Fallback color if undefined
+            };
+            
             return {
                 ...state,
                 players: [
                     ...state.players.slice(0, state.currentPlayerIndex),
                     {
                         ...currentPlayer,
-                        hand: [...currentPlayer.hand, drawnCard]
+                        hand: [...currentPlayer.hand, validDrawnCard]
                     },
                     ...state.players.slice(state.currentPlayerIndex + 1)
                 ],

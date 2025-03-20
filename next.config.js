@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://dontdropthat-lost-cities-rl-be.hf.space/api/:path*',
+        destination: 'http://localhost:8080/:path*',
       },
     ];
   },
