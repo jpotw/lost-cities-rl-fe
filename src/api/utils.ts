@@ -1,10 +1,11 @@
-import { GameState, Card, CardColor, PlayerType, GamePhase } from '@/types/game';
+import { GameState, Card, CardColor, PlayerType, GamePhase, CardValue, Player } from '@/types/game';
 import { SECRET_KEY } from '@/constants';
 
+// Types from backend
 interface BackendCard {
-    id: number;
-    suit: string;
-    value: number | 'HS';
+    id: string;
+    color: string;
+    value: number;
     isHidden: boolean;
 }
 
@@ -13,74 +14,70 @@ interface BackendPlayer {
     name: string;
     type: PlayerType;
     hand: BackendCard[];
-    expeditions: Record<string, BackendCard[]>;
+    expeditions: { [key: string]: BackendCard[] };
     score: number;
 }
 
 interface BackendGameState {
-    currentPlayerIndex: number;
-    gamePhase: GamePhase;
-    selectedCard: BackendCard | null;
     players: BackendPlayer[];
-    discardPiles: Record<string, BackendCard[]>;
+    currentPlayerIndex: number;
     deck: BackendCard[];
+    discardPiles: { [key: string]: BackendCard[] };
+    selectedCard: BackendCard | null;
+    gamePhase: GamePhase;
+    isAIThinking: boolean;
+    lastDiscarded: { color: CardColor; cardId: string } | undefined;
+    winner: string | null;
 }
 
-// Transform backend game state to frontend format
-function transformGameStateFromBackend(state: BackendGameState): GameState {
-    const transformColor = (suit: string): CardColor => suit.toLowerCase() as CardColor;
-    
-    const transformCard = (card: BackendCard): Card => ({
-        id: card.id.toString(),
-        color: transformColor(card.suit),
-        value: card.value,
-        isHidden: card.isHidden
-    });
+// Transform functions
+const transformColor = (color: string): CardColor => color.toLowerCase() as CardColor;
 
-    const emptyExpeditions: Record<CardColor, Card[]> = {
-        red: [],
-        blue: [],
-        green: [],
-        white: [],
-        yellow: [],
-        purple: []
-    };
+const transformCard = (card: BackendCard): Card => ({
+    id: card.id,
+    color: transformColor(card.color),
+    value: card.value === 0 ? 'HS' : card.value,
+    isHidden: card.isHidden,
+});
 
-    return {
-        currentPlayerIndex: state.currentPlayerIndex,
-        gamePhase: state.gamePhase,
-        selectedCard: state.selectedCard ? transformCard(state.selectedCard) : null,
-        players: state.players.map((player: BackendPlayer) => ({
-            id: player.id,
-            name: player.name,
-            type: player.type,
-            hand: player.hand.map(transformCard),
-            expeditions: {
-                ...emptyExpeditions,
-                ...Object.fromEntries(
-                    Object.entries(player.expeditions).map(([suit, cards]) => [
-                        transformColor(suit),
-                        (cards as BackendCard[]).map(transformCard)
-                    ])
-                )
-            },
-            score: player.score
-        })),
-        discardPiles: {
-            ...emptyExpeditions,
-            ...Object.fromEntries(
-                Object.entries(state.discardPiles).map(([suit, cards]) => [
-                    transformColor(suit),
-                    (cards as BackendCard[]).map(transformCard)
-                ])
-            )
-        },
-        deck: state.deck.map(transformCard),
-        isAIThinking: false,
-        lastDiscarded: undefined,
-        winner: null
-    };
-}
+const transformPlayer = (player: BackendPlayer): Player => ({
+    id: player.id,
+    name: player.name,
+    type: player.type,
+    hand: player.hand.map(transformCard),
+    expeditions: Object.fromEntries(
+        Object.entries(player.expeditions).map(([color, cards]) => [
+            transformColor(color),
+            cards.map(transformCard),
+        ])
+    ) as Record<CardColor, Card[]>,
+    score: player.score,
+});
+
+const transformGameState = (state: BackendGameState): GameState => ({
+    players: state.players.map(transformPlayer),
+    currentPlayerIndex: state.currentPlayerIndex,
+    deck: state.deck.map(transformCard),
+    discardPiles: Object.fromEntries(
+        Object.entries(state.discardPiles).map(([color, cards]) => [
+            transformColor(color),
+            cards.map(transformCard),
+        ])
+    ) as Record<CardColor, Card[]>,
+    selectedCard: state.selectedCard ? transformCard(state.selectedCard) : null,
+    gamePhase: state.gamePhase,
+    isAIThinking: state.isAIThinking ?? false,
+    lastDiscarded: state.lastDiscarded,
+    winner: state.winner,
+});
+
+// Transform back functions
+const transformCardBack = (card: Card): BackendCard => ({
+    id: card.id,
+    color: card.color.toUpperCase(),
+    value: card.value === 'HS' ? 0 : Number(card.value),
+    isHidden: card.isHidden || false,
+});
 
 // Transform the game state for the backend API
 function transformGameStateForBackend(state: GameState) {
@@ -93,7 +90,7 @@ function transformGameStateForBackend(state: GameState) {
         }
         return {
             id: card.id,
-            suit: transformColor(card.color),
+            color: transformColor(card.color),
             value: card.value === 'HS' ? 0 : card.value,
             isHidden: card.isHidden || false
         };
@@ -169,7 +166,7 @@ export async function startNewGame(): Promise<GameState> {
             console.log('Parsed response:', data);
             // Handle potential HuggingFace Space response format
             const gameState = data.data || data;
-            return transformGameStateFromBackend(gameState);
+            return transformGameState(gameState);
         } catch (parseError) {
             console.error('JSON parse error:', parseError);
             throw new Error(`Failed to parse server response: ${responseText}`);

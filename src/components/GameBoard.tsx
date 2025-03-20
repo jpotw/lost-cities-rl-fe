@@ -183,23 +183,10 @@ export const GameBoard = ({ gameState, onGameAction }: GameBoardProps) => {
     onGameAction({ type: 'RESET_GAME' });
   };
 
-  const handleStartNewGame = async () => {
+  const handleStartNewGame = () => {
     try {
       console.log('Starting new game...');
-      const newGameState = await startNewGame();
-      console.log('New Game State:', JSON.stringify(newGameState, null, 2));
-
-      const allCardIds = [
-        ...newGameState.players[0].hand.map(card => card.id),
-        ...newGameState.players[1].hand.map(card => card.id),
-        ...newGameState.deck.map(card => card.id),
-      ];
-      const uniqueIds = new Set(allCardIds);
-      if (uniqueIds.size !== allCardIds.length) {
-        console.error('Duplicate card IDs detected:', allCardIds);
-      }
-
-      onGameAction({ type: 'SET_GAME_STATE', payload: newGameState });
+      onGameAction({ type: 'RESET_GAME' });
       setIsMenuOpen(false);
     } catch (error) {
       console.error('Failed to start new game:', error);
