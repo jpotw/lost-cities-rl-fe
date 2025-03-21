@@ -1,7 +1,7 @@
 import { Card, CardColor, GameState, Player } from '@/types/game';
 import { v4 as uuidv4 } from 'uuid';
 
-export const COLORS: CardColor[] = ['red', 'blue', 'green', 'yellow', 'white', 'purple'];
+export const COLORS: CardColor[] = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'WHITE', 'PURPLE'];
 const NUMBER_VALUES: number[] = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // shuffle algorithm
@@ -62,12 +62,12 @@ export const createInitialGameState = (playerName: string): GameState => {
                 type: 'HUMAN',
                 hand: playerHand,
                 expeditions: {
-                    red: [],
-                    blue: [],
-                    green: [],
-                    yellow: [],
-                    white: [],
-                    purple: []
+                    RED: [],
+                    BLUE: [],
+                    GREEN: [],
+                    YELLOW: [],
+                    WHITE: [],
+                    PURPLE: []
                 },
                 score: 0
             },
@@ -77,12 +77,12 @@ export const createInitialGameState = (playerName: string): GameState => {
                 type: 'AI',
                 hand: aiHand,
                 expeditions: {
-                    red: [],
-                    blue: [],
-                    green: [],
-                    yellow: [],
-                    white: [],
-                    purple: []
+                    RED: [],
+                    BLUE: [],
+                    GREEN: [],
+                    YELLOW: [],
+                    WHITE: [],
+                    PURPLE: []
                 },
                 score: 0
             }
@@ -90,12 +90,12 @@ export const createInitialGameState = (playerName: string): GameState => {
         currentPlayerIndex: 0,
         deck: remainingDeck,
         discardPiles: {
-            red: [],
-            blue: [],
-            green: [],
-            yellow: [],
-            white: [],
-            purple: []
+            RED: [],
+            BLUE: [],
+            GREEN: [],
+            YELLOW: [],
+            WHITE: [],
+            PURPLE: []
         },
         selectedCard: null,
         gamePhase: 'PLAY',

@@ -12,12 +12,12 @@ interface ExpeditionProps {
 }
 
 const colorClasses = {
-  red: 'hover:bg-red-500/10',
-  blue: 'hover:bg-blue-500/10',
-  green: 'hover:bg-green-500/10',
-  yellow: 'hover:bg-yellow-500/10',
-  white: 'hover:bg-gray-400/10',
-  purple: 'hover:bg-purple-500/10'
+  RED: 'hover:bg-red-500/10',
+  BLUE: 'hover:bg-blue-500/10',
+  GREEN: 'hover:bg-green-500/10',
+  YELLOW: 'hover:bg-yellow-500/10',
+  WHITE: 'hover:bg-gray-400/10',
+  PURPLE: 'hover:bg-purple-500/10'
 };
 
 export const Expedition = ({

@@ -31,11 +31,9 @@ interface BackendGameState {
 }
 
 // Transform functions
-const transformColor = (color: string): CardColor => color.toLowerCase() as CardColor;
-
 const transformCard = (card: BackendCard): Card => ({
     id: card.id,
-    color: transformColor(card.color),
+    color: card.color as CardColor,
     value: card.value === 0 ? 'HS' : card.value,
     isHidden: card.isHidden,
 });
@@ -47,7 +45,7 @@ const transformPlayer = (player: BackendPlayer): Player => ({
     hand: player.hand.map(transformCard),
     expeditions: Object.fromEntries(
         Object.entries(player.expeditions).map(([color, cards]) => [
-            transformColor(color),
+            color as CardColor,
             cards.map(transformCard),
         ])
     ) as Record<CardColor, Card[]>,
@@ -60,7 +58,7 @@ const transformGameState = (state: BackendGameState): GameState => ({
     deck: state.deck.map(transformCard),
     discardPiles: Object.fromEntries(
         Object.entries(state.discardPiles).map(([color, cards]) => [
-            transformColor(color),
+            color as CardColor,
             cards.map(transformCard),
         ])
     ) as Record<CardColor, Card[]>,
@@ -74,15 +72,13 @@ const transformGameState = (state: BackendGameState): GameState => ({
 // Transform back functions
 const transformCardBack = (card: Card): BackendCard => ({
     id: card.id,
-    color: card.color.toUpperCase(),
+    color: card.color,
     value: card.value === 'HS' ? 0 : Number(card.value),
     isHidden: card.isHidden || false,
 });
 
 // Transform the game state for the backend API
 function transformGameStateForBackend(state: GameState) {
-    const transformColor = (color: string) => color.toUpperCase();
-    
     const transformCard = (card: Card) => {
         if (!card) {
             console.warn('Attempted to transform undefined or null card');
@@ -90,7 +86,7 @@ function transformGameStateForBackend(state: GameState) {
         }
         return {
             id: card.id,
-            color: transformColor(card.color),
+            color: card.color,
             value: card.value === 'HS' ? 0 : card.value,
             isHidden: card.isHidden || false
         };
@@ -107,7 +103,7 @@ function transformGameStateForBackend(state: GameState) {
             hand: player.hand.map(transformCard),
             expeditions: Object.fromEntries(
                 Object.entries(player.expeditions).map(([color, cards]) => [
-                    transformColor(color),
+                    color,
                     cards.map(transformCard)
                 ])
             ),
@@ -115,7 +111,7 @@ function transformGameStateForBackend(state: GameState) {
         })),
         discardPiles: Object.fromEntries(
             Object.entries(state.discardPiles).map(([color, cards]) => [
-                transformColor(color),
+                color,
                 cards.map(transformCard)
             ])
         ),

@@ -11,12 +11,12 @@ interface CardProps {
 
 export const Card = ({ card, isPlayable, onClick, className }: CardProps) => {
   const colorClasses = {
-    red: 'from-rose-500/90 to-red-600/90 shadow-red-500/30',
-    blue: 'from-blue-500/90 to-indigo-600/90 shadow-blue-500/30',
-    green: 'from-emerald-500/90 to-green-600/90 shadow-emerald-500/30',
-    yellow: 'from-amber-400/90 to-yellow-500/90 shadow-yellow-500/30',
-    white: 'from-slate-300/90 to-white/90 shadow-slate-400/30 !text-gray-800',
-    purple: 'from-purple-500/90 to-violet-600/90 shadow-purple-500/30'
+    RED: 'from-rose-500/90 to-red-600/90 shadow-red-500/30',
+    BLUE: 'from-blue-500/90 to-indigo-600/90 shadow-blue-500/30',
+    GREEN: 'from-emerald-500/90 to-green-600/90 shadow-emerald-500/30',
+    YELLOW: 'from-amber-400/90 to-yellow-500/90 shadow-yellow-500/30',
+    WHITE: 'from-slate-300/90 to-white/90 shadow-slate-400/30 !text-gray-800',
+    PURPLE: 'from-purple-500/90 to-violet-600/90 shadow-purple-500/30'
   };
 
   const cardBack = (

@@ -17,12 +17,12 @@ const emptyGameState: GameState = {
       hand: [],
       score: 0,
       expeditions: {
-        red: [],
-        blue: [],
-        green: [],
-        yellow: [],
-        white: [],
-        purple: []
+        RED: [],
+        BLUE: [],
+        GREEN: [],
+        YELLOW: [],
+        WHITE: [],
+        PURPLE: []
       }
     },
     {
@@ -32,12 +32,12 @@ const emptyGameState: GameState = {
       hand: [],
       score: 0,
       expeditions: {
-        red: [],
-        blue: [],
-        green: [],
-        yellow: [],
-        white: [],
-        purple: []
+        RED: [],
+        BLUE: [],
+        GREEN: [],
+        YELLOW: [],
+        WHITE: [],
+        PURPLE: []
       }
     }
   ],
@@ -46,12 +46,12 @@ const emptyGameState: GameState = {
   selectedCard: null,
   deck: [],
   discardPiles: {
-    red: [],
-    blue: [],
-    green: [],
-    yellow: [],
-    white: [],
-    purple: []
+    RED: [],
+    BLUE: [],
+    GREEN: [],
+    YELLOW: [],
+    WHITE: [],
+    PURPLE: []
   },
   winner: null,
   isAIThinking: false
